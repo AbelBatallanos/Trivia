@@ -56,6 +56,43 @@ Python 3.x
 Pip (gestor de paquetes de Python)
 
 Pasos de Instalación
-Clona el repositorio
+Clona el repositorio: https://github.com/AbelBatallanos/Trivia.git
 
+### Uso de docker con Django
+
+Debes Abrir Docker Desktop y luego abrir el proyecto.
+
+En la consola del ID debes asegurarte que debes de estar dentro del directorio  software\backend luego ejecutas el siguente comando:
+  Paso 1.- docker-compose exec web bash
+
+  Paso 2.- python manage.py makemigrations
+
+  Paso 3.- python manage.py migrate
+
+Luego de eso revisa la carpeta  "docker-compose.yml", dónde tiene toda la configuracion de la Base de datos  
+
+Debes dirigirte a esta url, para configurar la baase de datos  http://localhost:5050/
+ingresa los datos : PGADMIN_DEFAULT_EMAIL ,  PGADMIN_DEFAULT_PASSWORD
+pgadmin:  
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: 12345678
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+#### luego:
+
+Crea una BD con estos datos:
+db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: software
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+#### Luego de toda la configuracion ingresa a esta url  http://localhost:8000/trivia/sala/
 
