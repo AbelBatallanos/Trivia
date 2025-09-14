@@ -1,16 +1,14 @@
-# from django.urls import path
-# from opcionQuiz.api.views import , 
+from django.urls import path
+from opcionQuiz.api.views import  listOpcion, opcionUpdate, opcionDelete
 
-# urlpatterns = [
+urlpatterns = [
+    path('opcion/listar/', listOpcion.as_view(), name="listar-opcion"),
+    
+    path('pregunta/<int:id_pregunta>/opcion/<int:id_opcion>/update/', opcionUpdate.as_view(), name="update-opcion"),
+    
+    path('pregunta/<int:id_pregunta>/opcion/<int:id_opcion>/delete/', opcionDelete.as_view(), name="delete-opcion"),
+]
 
-    
-    # path('pregunta/{id_pregunta}/opcion/crear', CrearOpcion.as_view(), name="crear-opcion"),
-    
-    # path('pregunta/{id_pregunta}/opcion/{id_opcion}/update', UpdateOpcion.as_view(), name="update-opcion"),
-    
-    # path('pregunta/{id_pregunta}/opcion/{id_opcion}/delete', DeleteeOpcion.as_view(), name="delete-opcion"),
-    
-# ]
 
 
 

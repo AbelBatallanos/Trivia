@@ -6,7 +6,11 @@ from rest_framework.views import APIView
 
 
 
-
+class listOpcion(APIView):
+    def get(self, request):
+        opcion = OpcionQuiz.objects.all()
+        serializer = OpcionQuizSerializer(opcion, many=True)
+        return Response(serializer.data)
 
 class opcionDelete(APIView):
     def delete(self, request, id_pregunta, id_opcion):

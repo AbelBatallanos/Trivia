@@ -23,7 +23,7 @@ urlpatterns = [
     path('trivia/sala/', include("sala.api.urls")),
 
     path('trivia/game/', include("preguntaQuiz.api.urls")),
-    # path('trivia/game/sala/', include("opcionQuiz.api.urls")),
+    path('trivia/game/', include("opcionQuiz.api.urls")),
     
 ]
 

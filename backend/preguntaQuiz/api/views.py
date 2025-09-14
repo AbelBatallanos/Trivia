@@ -14,12 +14,12 @@ class listPregunta(APIView):
         serializer = PreguntaQuizSerializer(preguntas, many=True)
         return Response(serializer.data)
 
-class CrearPreguntaEnSalaAV(APIView):
+class CrearPreguntaEnSalaAV(APIView): # metdo post donde creamos explicitamente la pregunta y junto a sus opciones 
     def post(self, request, id_sala):
-        # try:
-        sala = Sala.objects.get(id=id_sala)
-        # except Sala.DoesNotExist:
-        #     return Response({'error': 'Sala no encontrada'}, status=404)
+        try:
+            sala = Sala.objects.get(id=id_sala)
+        except Sala.DoesNotExist:
+            return Response({'error': 'Sala no encontrada'}, status=404)
 
         # if sala.creador != request.user:
         #     return Response({'error': 'No tienes permiso para agregar preguntas'}, status=403)
@@ -34,15 +34,14 @@ class CrearPreguntaEnSalaAV(APIView):
 
 class UpdatePregunta(APIView):
     def put(self, request, id_sala, id_pregunta):
-        # try:
-        #     sala = Sala.objects.get(id=id_sala)
-        # except Sala.DoesNotExist:
-        #     return Response({'error': 'Sala no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            sala = Sala.objects.get(id=id_sala)
+        except Sala.DoesNotExist:
+            return Response({'error': 'Sala no encontrada'}, status=status.HTTP_404_NOT_FOUND)
 
         # if sala.creador != request.user:
         #     return Response({'error': 'No tienes permiso para modificar esta sala'}, status=status.HTTP_403_FORBIDDEN)
-        try:
-            sala = Sala.objects.get(id=id_sala)
+        try:  
             pregunta = PreguntaQuiz.objects.get(id=id_pregunta, sala=sala)
         except PreguntaQuiz.DoesNotExist:
             return Response({'error': 'Pregunta no encontrada'}, status=status.HTTP_404_NOT_FOUND)
@@ -56,16 +55,15 @@ class UpdatePregunta(APIView):
 
 class DeletePregunta(APIView):
     def delete(self, request, id_sala, id_pregunta):
-        # try:
-        #     sala = Sala.objects.get(id=id_sala)
-        # except Sala.DoesNotExist:
-        #     return Response({'error': 'Sala no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            sala = Sala.objects.get(id=id_sala)
+        except Sala.DoesNotExist:
+            return Response({'error': 'Sala no encontrada'}, status=status.HTTP_404_NOT_FOUND)
 
         # if sala.creador != request.user:
         #     return Response({'error': 'No tienes permiso para eliminar esta pregunta'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
-            sala = Sala.objects.get(id=id_sala)
             pregunta = PreguntaQuiz.objects.get(id=id_pregunta, sala=sala)
         except PreguntaQuiz.DoesNotExist:
             return Response({'error': 'Pregunta no encontrada'}, status=status.HTTP_404_NOT_FOUND)

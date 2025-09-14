@@ -4,4 +4,18 @@ from opcionQuiz.models import OpcionQuiz
 class OpcionQuizSerializer(serializers.ModelSerializer):
     class Meta:
         model = OpcionQuiz
-        fields = ['id', 'descripcion', 'es_correcta', 'puntaje']
+        fields = ['id', 'pregunta_id', 'descripcion', 'es_correcta', 'puntaje']
+
+    def validate(self, data):
+        
+        if data['puntaje'] <= 0 and data["es_correcta"] == True:
+            raise serializers.ValidationError({"puntaje": "El puntaje debe de ser mayor a 0"})
+        
+        return data
+
+
+
+
+
+
+

@@ -12,15 +12,25 @@ class PreguntaQuizSerializer(serializers.ModelSerializer):
         read_only_fields = ['orden']
 
     def validate(self, data):
-        opciones = data.get('opciones', [])
+        opciones = data.get('opciones')
+        if data['tiempo_limite'] < 5 or data['tiempo_limite'] > 10 :
+            raise serializers.ValidationError({"tiempo_limite": "Debe ser al menos 5 o maximo 10 segundos" })   
+           
+        if opciones is None:
+            raise serializers.ValidationError({"opciones": "Debes agregar las opciones."})
+
+        if not isinstance(opciones, list):
+            raise serializers.ValidationError({"opciones": "El campo opciones debe ser una lista."})
+
         if not (2 <= len(opciones) <= 4):
-            raise serializers.ValidationError("Cada pregunta debe tener entre 2 y 4 opciones.")
+            raise serializers.ValidationError({"opciones": "Cada pregunta debe tener entre 2 y 4 opciones."})
 
         correctas = [op for op in opciones if op.get('es_correcta')]
         if len(correctas) != 1:
-            raise serializers.ValidationError("Debe haber exactamente una opción correcta.")
+            raise serializers.ValidationError({"opciones": "Debe haber exactamente una opción correcta."})
+
         return data
-    
+
     
     def create(self, validated_data):
         opciones_data = validated_data.pop('opciones')
@@ -33,7 +43,7 @@ class PreguntaQuizSerializer(serializers.ModelSerializer):
 
 
     def update(self, instance, validated_data):
-        opciones_data = validated_data.pop('opciones', None)
+        opciones_data = validated_data.pop('opciones', None) #Extrae la lista de opciones 
 
         # Actualizar campos simples
         for attr, value in validated_data.items():
