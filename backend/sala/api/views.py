@@ -1,5 +1,4 @@
-
-
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from sala.models import Sala
 from sala.api.serializers import SalaSerializer
@@ -8,21 +7,25 @@ from rest_framework.views import APIView
 
 
 
+
 class CrearSalaCompletaAV(APIView):
+    permission_classes = [IsAuthenticated]  #Proteje la vista , solo los users Auth pueden usar este metodo
+
     def get(self, request):
         sala = Sala.objects.all()
         serializers = SalaSerializer(sala, many=True)
         return Response(serializers.data)
-        
+
     def post(self, request):
-        serializer = SalaSerializer(data=request.data)
+        serializer = SalaSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            sala = serializer.save()
+            sala = serializer.save(creador=request.user)  # Asigno el creador 
             return Response(SalaSerializer(sala).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SalaDetailAV(APIView):
+    permission_classes = [IsAuthenticated] 
     def get(self, request, id):
         try:
             sala = Sala.objects.get(pk=id)

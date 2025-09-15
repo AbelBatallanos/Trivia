@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from usuario.models import Usuario
-
+from django.contrib.auth.hashers import make_password
 
 
 
@@ -13,15 +13,21 @@ class UsuarioSerializer(serializers.ModelSerializer):
         
     def validate(self, data):
         if data['nombre'] == data['apellidos']:
-            raise serializers.ValidationError("La direccion y pais deben ser diferentes")
+            raise serializers.ValidationError("Nombre y Apellidos deben ser diferentes")
         else:
             return data
         
-    def validate_imagen(self, data):  #el validate es el standar ya que esta predefinido en el framework;  ahora _imagen esto es hacer referenci a uno de los elementos de la entidad 
-        if len(data) < 2:
-            raise serializers.ValidationError("El valor es muy corta")
-        else:
-            return data
+    # def validate_imagen(self, data):  #el validate es el standar ya que esta predefinido en el framework;  ahora _imagen esto es hacer referenci a uno de los elementos de la entidad 
+    #     if len(data) < 2:
+    #         raise serializers.ValidationError("El valor es muy corta")
+    #     else:
+    #         return data
+
+  
+
+    def create(self, validated_data):
+        validated_data['password'] = make_password(validated_data['password'])
+        return super().create(validated_data)
 
 
 

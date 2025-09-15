@@ -1,0 +1,6 @@
+15/ septiembre/ 2025
+
+    modifique muchas cosas, agrege el auth ,  tube que reseatear el contenedor y la bd.
+    para poder aplicar los nuevos cambios a las tablas.
+    Usaremos la tabla user que tiene django instalado. 
+

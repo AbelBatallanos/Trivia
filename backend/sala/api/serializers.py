@@ -10,7 +10,7 @@ class SalaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sala
-        fields = ['id', 'titulo', 'categoria', 'capacidad', 'estado', 'codigoUnico', 'preguntas']
+        fields = ['id', 'titulo', 'categoria', 'capacidad', 'estado', 'codigoUnico', 'preguntas', 'creador']
         read_only_fields = ['codigoUnico']
         
         
@@ -35,7 +35,10 @@ class SalaSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         preguntas_data = validated_data.pop('preguntas')
-        sala = Sala.objects.create(**validated_data)
+        
+        # Asignar el creador desde el contexto (por ejemplo, request.user)
+        creador = self.context['request'].user
+        sala = Sala.objects.create(creador=creador, **validated_data)
 
         for pregunta_data in preguntas_data:
             opciones_data = pregunta_data.pop('opciones')
@@ -44,3 +47,4 @@ class SalaSerializer(serializers.ModelSerializer):
                 OpcionQuiz.objects.create(pregunta=pregunta, **opcion_data)
 
         return sala
+
