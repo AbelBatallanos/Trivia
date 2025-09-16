@@ -4,3 +4,7 @@
     para poder aplicar los nuevos cambios a las tablas.
     Usaremos la tabla user que tiene django instalado. 
 
+
+
+
+detalles frontend
