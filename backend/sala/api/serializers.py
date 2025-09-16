@@ -10,8 +10,8 @@ class SalaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sala
-        fields = ['id', 'titulo', 'categoria', 'capacidad', 'estado', 'codigoUnico', 'preguntas', 'creador']
-        read_only_fields = ['codigoUnico']
+        fields = ['id', 'titulo', 'categoria', 'capacidad', 'estado',  'creador_id', 'codigoUnico', 'preguntas' ]
+        read_only_fields = ['codigoUnico', 'creador_id']
         
         
     def validate(self, data):

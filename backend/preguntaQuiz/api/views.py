@@ -12,17 +12,28 @@ class listPregunta(APIView):
         serializer = PreguntaQuizSerializer(preguntas, many=True)
         return Response(serializer.data)
 
-
+class listPreguntaSala(APIView):
+    def get(self, request, id_sala):
+        try:
+            sala = Sala.objects.get(id=id_sala)
+        except Sala.DoesNotExist:
+            return Response({'error': 'Sala no encontrada'}, status=404)
+        preguntas = PreguntaQuiz.objects.filter(sala_id=sala.id)
+        
+        return Response(PreguntaQuizSerializer(preguntas, many=True).data, status=status.HTTP_200_OK)
+        
+        
+        
 class CrearPreguntaEnSalaAV(APIView): # metdo post donde creamos explicitamente la pregunta y junto a sus opciones 
-    
+    permission_classes = [IsAuthenticated] 
     def post(self, request, id_sala):
         try:
             sala = Sala.objects.get(id=id_sala)
         except Sala.DoesNotExist:
             return Response({'error': 'Sala no encontrada'}, status=404)
 
-        # if sala.creador != request.user:
-        #     return Response({'error': 'No tienes permiso para agregar preguntas'}, status=403)
+        if sala.creador != request.user:
+            return Response({'error': 'No tienes permiso para agregar preguntas'}, status=403)
 
         serializer = PreguntaQuizSerializer(data=request.data)
         if serializer.is_valid():
@@ -32,14 +43,15 @@ class CrearPreguntaEnSalaAV(APIView): # metdo post donde creamos explicitamente 
 
 
 class UpdatePregunta(APIView):
+    permission_classes = [IsAuthenticated] 
     def put(self, request, id_sala, id_pregunta):
         try:
             sala = Sala.objects.get(id=id_sala)
         except Sala.DoesNotExist:
             return Response({'error': 'Sala no encontrada'}, status=status.HTTP_404_NOT_FOUND)
 
-        # if sala.creador != request.user:
-        #     return Response({'error': 'No tienes permiso para modificar esta sala'}, status=status.HTTP_403_FORBIDDEN)
+        if sala.creador != request.user:
+            return Response({'error': 'No tienes permiso para modificar esta sala'}, status=status.HTTP_403_FORBIDDEN)
         try:  
             pregunta = PreguntaQuiz.objects.get(id=id_pregunta, sala=sala)
         except PreguntaQuiz.DoesNotExist:
@@ -53,14 +65,16 @@ class UpdatePregunta(APIView):
 
 
 class DeletePregunta(APIView):
+    permission_classes = [IsAuthenticated] 
+    
     def delete(self, request, id_sala, id_pregunta):
         try:
             sala = Sala.objects.get(id=id_sala)
         except Sala.DoesNotExist:
             return Response({'error': 'Sala no encontrada'}, status=status.HTTP_404_NOT_FOUND)
 
-        # if sala.creador != request.user:
-        #     return Response({'error': 'No tienes permiso para eliminar esta pregunta'}, status=status.HTTP_403_FORBIDDEN)
+        if sala.creador != request.user:
+            return Response({'error': 'No tienes permiso para eliminar esta pregunta'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             pregunta = PreguntaQuiz.objects.get(id=id_pregunta, sala=sala)

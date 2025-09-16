@@ -16,3 +16,5 @@ urlpatterns = [
     path('register/usuario', RegistroUsuarioAV.as_view(), name="registerUser" ),
     path('logout/usuario', LogoutUsuarioAV.as_view(), name="logoutUser"),
 ]
+   
+   

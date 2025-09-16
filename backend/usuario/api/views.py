@@ -49,20 +49,20 @@ class LoginUsuarioAV(APIView):
         return Response({'error': 'Credenciales inválidas'}, status=400)
 
 
-class UsuarioLogin(APIView):
-    def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        try:
-            usuario = Usuario.objects.get(username=username)
-        except Usuario.DoesNotExist:
-            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+# class UsuarioLogin(APIView):
+#     def post(self, request):
+#         username = request.data.get('username')
+#         password = request.data.get('password')
+#         try:
+#             usuario = Usuario.objects.get(username=username)
+#         except Usuario.DoesNotExist:
+#             return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
-        if check_password(password, usuario.password):
-            token, _ = Token.objects.get_or_create(user=usuario)
-            return Response({'token': token.key})
-        else:
-            return Response({'error': 'Contraseña incorrecta'}, status=status.HTTP_401_UNAUTHORIZED)
+#         if check_password(password, usuario.password):
+#             token, _ = Token.objects.get_or_create(user=usuario)
+#             return Response({'token': token.key})
+#         else:
+#             return Response({'error': 'Contraseña incorrecta'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class LogoutUsuarioAV(APIView):

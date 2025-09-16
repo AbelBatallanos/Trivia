@@ -6,7 +6,18 @@ from rest_framework import status
 from rest_framework.views import APIView
 
 
+class ListarmySalas(APIView):
+    def get(self, request):
+        salas = Sala.objects.filter(creador_id=request.user.id)
 
+        if not salas.exists():
+            return Response(
+                {"mensaje": "Aún no has creado ninguna sala."},
+                status=status.HTTP_200_OK
+            )
+
+        serializer = SalaSerializer(salas, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class CrearSalaCompletaAV(APIView):
     permission_classes = [IsAuthenticated]  #Proteje la vista , solo los users Auth pueden usar este metodo
@@ -19,7 +30,7 @@ class CrearSalaCompletaAV(APIView):
     def post(self, request):
         serializer = SalaSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            sala = serializer.save(creador=request.user)  # Asigno el creador 
+            sala = serializer.save()
             return Response(SalaSerializer(sala).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
