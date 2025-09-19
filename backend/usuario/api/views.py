@@ -3,7 +3,7 @@ from django.contrib.auth.hashers import check_password
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
-from usuario.models import Usuario  #Import la tabla 
+
 # from usuario.api.serializers import UsuarioSerializer
 
 from rest_framework import status

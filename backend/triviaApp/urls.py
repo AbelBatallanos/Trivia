@@ -25,8 +25,8 @@ urlpatterns = [
     path('trivia/game/', include("preguntaQuiz.api.urls")),
     path('trivia/game/', include("opcionQuiz.api.urls")),
        
-    # path('trivia/login/', include("usuario.api.urls")),
-    # path('trivia/usuario/', include("usuario.api.urls")),
+    # path('trivia/dataPoints/', include("usuarioPuntaje.api.urls")),
+    # path('trivia/respuesta/', include("respuestausuario.api.urls")),
     
 ]
 

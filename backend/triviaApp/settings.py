@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'opcionQuiz',
     'rest_framework',
     'rest_framework.authtoken',
+    'corsheaders', #Solucion pa los cors
 ]
 
 REST_FRAMEWORK = {
@@ -56,6 +57,10 @@ REST_FRAMEWORK = {
 }
 
 MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware', #ini cors
+    'corsheaders.middleware.CorsMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',#hasta aqui es del cors
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -83,6 +88,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'triviaApp.wsgi.application'
+
 
 
 # Database
@@ -119,6 +125,18 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # AUTH_USER_MODEL = 'usuario.Usuario'
 
+CORS_ALLOWED_ORIGINS = [  #Habilita las conexiones especificas 
+    # "http://localhost:3000",
+    # "http://127.0.0.1:8000",
+    # "http://localhost:8000",
+    # "https://tudominio.com",
+    "http://127.0.0.1:5500"
+]
+# CORS_ALLOW_ALL_ORIGINS = True #habilita cualquier dominio para que consuma la api, pero no es recomendado para produccion
+
+# CORS_ALLOWED_ORIGIN_REGEXES = [ # para definir patrones de dominios.
+#     r"^https://\w+\.tudominio\.com$",
+# ]
 
 
 # Internationalization
