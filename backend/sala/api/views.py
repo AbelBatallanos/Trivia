@@ -19,6 +19,8 @@ class ListarmySalas(APIView):
         serializer = SalaSerializer(salas, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+
 class CrearSalaCompletaAV(APIView):
     permission_classes = [IsAuthenticated]  #Proteje la vista , solo los users Auth pueden usar este metodo
 
