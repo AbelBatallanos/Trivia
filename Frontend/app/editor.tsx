@@ -3,54 +3,54 @@
 import EditorHeader from "@/components/quizCreator/EditorHeader";
 import QuestionEditor from "@/components/quizCreator/QuestionEditor";
 import QuestionNavigator from "@/components/quizCreator/QuestionNavigator";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
 import { SafeAreaView, StyleSheet, View } from "react-native";
+
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 
 type Answer = { id: number; text: string; isCorrect: boolean };
 type Question = { id: number; text: string; answers: Answer[] };
 
+const createNewQuestion = (): Question => ({
+  id: Date.now(),
+  text: "",
+  answers: [
+    { id: Date.now() + 1, text: "", isCorrect: false },
+    { id: Date.now() + 2, text: "", isCorrect: false },
+    { id: Date.now() + 3, text: "", isCorrect: false },
+    { id: Date.now() + 4, text: "", isCorrect: false },
+  ],
+});
+
 const EditorScreen = () => {
   const router = useRouter();
+  const params = useLocalSearchParams();
+
   const [questions, setQuestions] = useState<Question[]>([
-    {
-      id: 1,
-      text: "¿Cuál es el planeta más grande del sistema solar?",
-      answers: [
-        { id: 1, text: "Júpiter", isCorrect: true },
-        { id: 2, text: "Saturno", isCorrect: false },
-        { id: 3, text: "Neptuno", isCorrect: false },
-        { id: 4, text: "Tierra", isCorrect: false },
-      ],
-    },
-    {
-      id: 2,
-      text: "¿Cuál es la capital de Francia?",
-      answers: [
-        { id: 1, text: "Madrid", isCorrect: false },
-        { id: 2, text: "Londres", isCorrect: false },
-        { id: 3, text: "Berlín", isCorrect: false },
-        { id: 4, text: "París", isCorrect: true },
-      ],
-    },
   ]);
   const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(0);
+
+  useEffect(() => {
+    // Si venimos de settings con preguntas, las cargamos
+    if (params.questions && typeof params.questions === "string") {
+      setQuestions(JSON.parse(params.questions));
+    }else{
+      // Si no hay preguntas, añadimos una por defecto
+      setQuestions([createNewQuestion()]);
+    }
+
+    // Si nos pasaron un indice especifico, vamos a esa pregunta
+    if (params.selectedIndex && typeof params.selectedIndex === "string") {
+      setSelectedQuestionIndex(parseInt(params.selectedIndex, 10));
+    } 
+  }, []);
 
   const handleSelectQuestion = (index: number) => {
     setSelectedQuestionIndex(index);
   };
 
   const handleAddQuestion = () => {
-    const newQuestion: Question = {
-      id: Date.now(),
-      text: "Nueva Pregunta",
-      answers: [
-        { id: Date.now() + 1, text: "", isCorrect: false },
-        { id: Date.now() + 2, text: "", isCorrect: false },
-        { id: Date.now() + 3, text: "", isCorrect: false },
-        { id: Date.now() + 4, text: "", isCorrect: false },
-      ],
-    };
+    const newQuestion =  createNewQuestion();
     setQuestions([...questions, newQuestion]);
     setSelectedQuestionIndex(questions.length);
   };
@@ -82,9 +82,30 @@ const EditorScreen = () => {
     updateQuestion({ ...currentQuestion, answers: newAnswers });
   };
 
-  const handleDone = () => {
-    const questionString = JSON.stringify(questions);
+  const handleGoToSettings = () => {
+    // for (const q of questions) {
+    //   if(!q.text.trim()) {
+    //     alert("Por favor, completa el texto de todas las preguntas.");
+    //     return;
+    //   }
+    //   const filledAnswers = q.answers.filter(a => a.text.trim());
+    //   if (filledAnswers.length < 2) {
+    //     Alert.alert("Error", `La pregunta "${q.text.slice(0.20)}..." debe tener al menos dos respuestas.`);
+    //     return;
+    //   }
+    // }
 
+    // 1. Filtramos las preguntas para quedarnos solo con las que tienen contenido.
+    const validQuestions = questions.filter(
+      (q) =>
+        q.text.trim().length > 0 ||
+        q.answers.some((a) => a.text.trim().length > 0)
+    );
+    // 2. Para cada pregunta válida, filtramos sus respuestas.
+  
+
+    // 3. Actualizamos el estado con las preguntas válidas.
+    const questionString = JSON.stringify(validQuestions);
     router.push({
       pathname: "/settings",
       params: { questions: questionString },
@@ -92,9 +113,19 @@ const EditorScreen = () => {
   };
 
   const currentQuestion = questions[selectedQuestionIndex];
+
   return (
     <SafeAreaView style={styles.container}>
-      <EditorHeader onDone={handleDone} />
+      <EditorHeader
+        leftButtonText="Quiz ⮟"
+        onLeftButtonPress={() =>
+          alert("Selector de tipo de quiz - no implementado")
+        }
+        rightButtonText="Hecho"
+        onRightButtonPress={handleGoToSettings}
+        rightButtonColor="#48BB78"
+        isRightButtonDisabled={questions.length === 0}
+      />
 
       <View style={styles.topContainer}>
         <QuestionEditor

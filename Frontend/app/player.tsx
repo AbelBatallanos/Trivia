@@ -1,13 +1,22 @@
+import { getTriviaQuestions } from "@/api/api";
 import FeedbackOverlay from "@/components/game/FeedbackOverlay";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 const exampleTrivia = [
   {
     text: "¿Cuál es la capital de Japón?",
-    timeLimit: 20,
+    timeLimit: 5,
     answers: [
       { text: "Pekín" },
       { text: "Seúl" },
@@ -17,7 +26,7 @@ const exampleTrivia = [
   },
   {
     text: '¿Qué elemento tiene el símbolo "O"?',
-    timeLimit: 15,
+    timeLimit: 5,
     answers: [
       { text: "Oxígeno", isCorrect: true },
       { text: "Oro" },
@@ -34,13 +43,19 @@ const answerOptions = [
   { color: "#38A169", shape: "square" as const },
 ];
 
-type GameState = "answering" | "feedback" | "interstitial";
+type GameState = "loading" | "answering" | "feedback" | "interstitial";
 
 const PlayerScreen = () => {
   const router = useRouter();
-  const [gameState, setGameState] = useState<GameState>("answering");
+  const params = useLocalSearchParams();
+
+  const { quizData: quizDataString, nickname, isHost } = params;
+  const quizData = JSON.parse(quizDataString as string);
+
+  const [gameState, setGameState] = useState<GameState>("loading");
+  const [questions, setQuestions] = useState<any[]>([]); // Almacenará las preguntas del backend
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(exampleTrivia[0].timeLimit);
+  const [timeLeft, setTimeLeft] = useState(0);
   const [feedback, setFeedback] = useState({
     show: false,
     isCorrect: false,
@@ -48,11 +63,32 @@ const PlayerScreen = () => {
   });
   const [hasAnswered, setHasAnswered] = useState(false);
   const [totalScore, setTotalScore] = useState(0);
-  const { nickname } = useLocalSearchParams();
   const [selectedAnswerIndex, setSelectedAnswerIndex] = useState<number | null>(
     null
   );
-  const currentQuestion = exampleTrivia[currentQuestionIndex];
+
+  // const currentQuestion = exampleTrivia[currentQuestionIndex];
+
+  // 1. Cargar las preguntas del backend al iniciar la pantalla
+  useEffect(() => {
+    const loadQuestions = async () => {
+      try {
+        const response = await getTriviaQuestions(quizData.id);
+        if (response.data && response.data.length > 0) {
+          setQuestions(response.data);
+          setTimeLeft(response.data[0].tiempo_limite);
+          setGameState("answering");
+        } else {
+          Alert.alert("Error", "Esta trivia no tiene preguntas.", [
+            { text: "OK", onPress: () => router.replace("/(tabs)") },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error al cargar las preguntas:", error);
+      }
+    };
+    loadQuestions();
+  }, []);
 
   useEffect(() => {
     if (gameState !== "answering") return;
@@ -73,22 +109,17 @@ const PlayerScreen = () => {
 
   const handleAnswer = (answerIndex: number) => {
     if (hasAnswered) return;
-
     setHasAnswered(true);
     setSelectedAnswerIndex(answerIndex);
 
+    const currentQuestion = questions[currentQuestionIndex];
     const isCorrect =
-      exampleTrivia[currentQuestionIndex].answers[answerIndex]?.isCorrect ||
-      false;
+      currentQuestion.opciones[answerIndex]?.es_correcta || false;
     const points = isCorrect
-      ? Math.round(
-          1000 * (timeLeft / exampleTrivia[currentQuestionIndex].timeLimit)
-        )
+      ? Math.round(1000 * (timeLeft / currentQuestion.tiempo_limite))
       : 0;
 
-    setTotalScore((prevScore) => prevScore + points);
-
-    console.log("Respuesta enviada. Esperando a que termine el tiempo...");
+    setTotalScore((prev) => prev + points);
     setFeedback({ show: true, isCorrect, points });
   };
 
@@ -104,22 +135,27 @@ const PlayerScreen = () => {
   };
 
   const goToNextQuestion = () => {
-    if (currentQuestionIndex < exampleTrivia.length - 1) {
+    if (currentQuestionIndex < questions.length - 1) {
       const nextIndex = currentQuestionIndex + 1;
       setCurrentQuestionIndex(nextIndex);
-      setTimeLeft(exampleTrivia[nextIndex].timeLimit);
+      setTimeLeft(questions[nextIndex].tiempo_limite);
       setHasAnswered(false);
       setSelectedAnswerIndex(null);
       setFeedback({ show: false, isCorrect: false, points: 0 });
       setGameState("answering");
     } else {
-      console.log("FIN DEL JUEGO. Puntaje final: ", totalScore);
       router.replace({
         pathname: "/results",
-        params: { finalScore: totalScore, nickname },
+        params: { finalScore: totalScore.toString(), nickname },
       });
     }
   };
+
+  if (gameState === "loading" || questions.length === 0) {
+    return <View style={styles.container}><ActivityIndicator size="large" color="white" /></View>;
+  }
+
+  const currentQuestion = questions[currentQuestionIndex];
 
   if (gameState === "interstitial") {
     const isLastQuestion = currentQuestionIndex >= exampleTrivia.length - 1;
@@ -138,7 +174,7 @@ const PlayerScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.questionCounter}>
-          <Text style={styles.counterText}>1 de 10</Text>
+          <Text style={styles.counterText}>{`${currentQuestionIndex + 1} de ${questions.length}`}</Text>
         </View>
         <Pressable>
           <Ionicons name="ellipsis-vertical" size={24} color="white" />
@@ -146,13 +182,13 @@ const PlayerScreen = () => {
       </View>
 
       <View style={styles.mainContent}>
-        <Text style={styles.questionText}>{currentQuestion.text}</Text>
+        <Text style={styles.questionText}>{currentQuestion.pregunta}</Text>
 
         <View style={styles.timerContainer}>
           <Text style={styles.timerText}>{timeLeft}</Text>
         </View>
         <View style={styles.answersContainer}>
-          {currentQuestion.answers.map((answer, index) => {
+          {currentQuestion.opciones.map((opcion:any, index:number) => {
             const isSelected = index === selectedAnswerIndex;
             const buttonStyle = hasAnswered
               ? isSelected
@@ -162,10 +198,10 @@ const PlayerScreen = () => {
 
             return (
               <Pressable
-                key={index}
+                key={opcion.id}
                 style={[
                   buttonStyle,
-                  { backgroundColor: answerOptions[index].color },
+                  { backgroundColor: answerOptions[index % 4].color },
                 ]}
                 onPress={() => handleAnswer(index)}
                 disabled={hasAnswered}
@@ -175,7 +211,7 @@ const PlayerScreen = () => {
                   size={20}
                   color="white"
                 />
-                <Text style={styles.answerText}>{answer.text}</Text>
+                <Text style={styles.answerText}>{opcion.descripcion}</Text>
               </Pressable>
             );
           })}

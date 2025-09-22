@@ -8,15 +8,17 @@ type QuizCardProps = {
   title: string;
   questionCount: number;
   isPrivate?: boolean;
+  onPress?: () => void;
 };
 
 const QuizCard = ({
   title,
   questionCount,
   isPrivate = true,
+  onPress,
 }: QuizCardProps) => {
   return (
-    <Pressable style={styles.card}>
+    <Pressable style={styles.card} onPress={onPress}>
       <View style={styles.imagePlaceholder} />
       <View style={styles.infoContainer}>
         <Text style={styles.title}>{title}</Text>

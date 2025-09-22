@@ -2,7 +2,6 @@ from django.urls import path
 from usuario.api.views import  RegistroUsuarioAV, LoginUsuarioAV, LogoutUsuarioAV
 
 
-
 urlpatterns = [
     #   url ||     nombe funcion   ||     nombre que mntiene referencia a esta url ayuda la flexibilidad
     # path('', UsuarioListAV.as_view(), name="indexUsuario"),
@@ -15,6 +14,7 @@ urlpatterns = [
     path('login/usuario', LoginUsuarioAV.as_view(), name="loginUser" ),
     path('register/usuario', RegistroUsuarioAV.as_view(), name="registerUser" ),
     path('logout/usuario', LogoutUsuarioAV.as_view(), name="logoutUser"),
+
 ]
    
    

@@ -1,9 +1,8 @@
-// Ubicación: app/join.tsx
-
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,28 +11,53 @@ import {
   View,
 } from "react-native";
 
+import { findTriviaByCode } from "@/api/api"; // Asegúrate de tener esta función en tu api.ts
 import CustomButton from "@/components/common/Button";
 import CustomTextInput from "@/components/common/TextInput";
 
 const JoinGameScreen = () => {
   const [pin, setPin] = useState("");
   const [nickname, setNickname] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const handleJoinGame = () => {
+
+  const handleJoinGame = async () => {
     if (!pin.trim() || !nickname.trim()) {
-      alert("Por favor, introduce un PIN y un apodo");
+      Alert.alert("Campos incompletos", "Por favor, introduce un PIN y un apodo.");
       return;
     }
-    console.log(
-      `Uniendo al jugador "${nickname}" a la partida con el PIN: ${pin}`
-    );
-    router.push({ pathname: "/lobby", params: { nickname } });
+
+    setIsLoading(true);
+
+    try {
+      // 1. Llamamos a la API para buscar la sala por el PIN
+      const response = await findTriviaByCode(pin);
+      const quizData = response.data;
+      
+      // 2. Si la encontramos, navegamos al lobby con los datos de la trivia
+      router.push({ 
+        pathname: "/lobby", 
+        params: { 
+          quizData: JSON.stringify(quizData), 
+          nickname,
+          isHost: 'false' // Marcamos explícitamente que es un jugador
+        } 
+      });
+
+    } catch (error) {
+      // 3. Si la API devuelve un error (ej: 404), mostramos una alerta
+      console.error("Error al unirse a la sala:", error);
+      Alert.alert("PIN no válido", "No se encontró ninguna partida con ese código. Inténtalo de nuevo.");
+    } finally {
+      // 4. Reactivamos el botón
+      setIsLoading(false);
+    }
   };
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.modalContainer} // Contenedor principal que oscurece el fondo
+      style={styles.modalContainer}
     >
       <View style={styles.contentSheet}>
         <Pressable style={styles.closeButton} onPress={() => router.back()}>
@@ -45,8 +69,8 @@ const JoinGameScreen = () => {
           placeholder="PIN"
           value={pin}
           onChangeText={setPin}
-          keyboardType="numeric"
-          maxLength={6}
+          autoCapitalize="characters"
+          maxLength={8}
           style={styles.pinInput}
         />
         <CustomTextInput
@@ -55,7 +79,11 @@ const JoinGameScreen = () => {
           onChangeText={setNickname}
           maxLength={15}
         />
-        <CustomButton title="Entrar" onPress={handleJoinGame} />
+        <CustomButton 
+          title={isLoading ? "Buscando..." : "Entrar"} 
+          onPress={handleJoinGame}
+          disabled={isLoading}
+        />
       </View>
     </KeyboardAvoidingView>
   );
@@ -67,7 +95,6 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-
   contentSheet: {
     height: "85%",
     backgroundColor: "#1A202C",
@@ -96,5 +123,5 @@ const styles = StyleSheet.create({
     marginBottom: 80,
   },
 });
-
+  
 export default JoinGameScreen;

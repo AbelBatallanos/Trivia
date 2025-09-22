@@ -4,11 +4,13 @@ from sala.models import Sala
 from sala.api.serializers import SalaSerializer
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 
 
 class ListarmySalas(APIView):
     def get(self, request):
-        salas = Sala.objects.filter(creador_id=request.user.id)
+
+        salas = Sala.objects.filter(creador_id=request.user.id).order_by('-fecha_creacion')
 
         if not salas.exists():
             return Response(
@@ -18,8 +20,6 @@ class ListarmySalas(APIView):
 
         serializer = SalaSerializer(salas, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 
 class CrearSalaCompletaAV(APIView):
     permission_classes = [IsAuthenticated]  #Proteje la vista , solo los users Auth pueden usar este metodo
@@ -69,3 +69,12 @@ class SalaDetailAV(APIView):
         sala.delete()
         return Response({'mensaje': 'Sala eliminada'}, status=status.HTTP_204_NO_CONTENT)
           
+class SalaPorCodigoAV(APIView): 
+    permission_classes = [AllowAny] 
+    def get(self, request, codigo_unico):
+        try:
+            sala = Sala.objects.get(codigoUnico=codigo_unico.upper())
+            serializer = SalaSerializer(sala)
+            return Response(serializer.data)
+        except Sala.DoesNotExist:
+            return Response({'error': 'Sala no encontrada'}, status=status.HTTP_404_NOT_FOUND)
