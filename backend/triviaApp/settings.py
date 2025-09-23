@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'usuario',
     'sala',
-    # 'usuarioPuntaje',
+    'usuarioPuntaje',
     'preguntaQuiz',
     'opcionQuiz',
     'rest_framework',

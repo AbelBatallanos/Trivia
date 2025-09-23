@@ -4,8 +4,6 @@ from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
-# from usuario.api.serializers import UsuarioSerializer
-
 from rest_framework import status
 from rest_framework.views import APIView
 
@@ -14,8 +12,6 @@ from django.contrib.auth import authenticate
 
 # Create your views here.
 # @api_view() este es el decorador, si lo dejamos asi , por defecto viene ser metodo Get
-
-
 
 class RegistroUsuarioAV(APIView):
     permission_classes = [AllowAny]

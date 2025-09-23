@@ -10,7 +10,7 @@ class SalaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sala
-        fields = ['id', 'titulo', 'categoria', 'capacidad', 'estado',  'creador_id', 'codigoUnico', 'preguntas' ]
+        fields = ['id', 'titulo', 'capacidad', 'creador_id', 'codigoUnico', 'preguntas' ]
         read_only_fields = ['codigoUnico', 'creador_id']
         
         
@@ -21,6 +21,9 @@ class SalaSerializer(serializers.ModelSerializer):
 
         # Validación 2 y 3: preguntas con al menos 2 opciones y solo una correcta
         preguntas = data.get('preguntas', [])
+        if len(preguntas) < 1:
+                raise serializers.ValidationError("Debe de Haber minimo 1 pregunta")
+            
         for i, pregunta in enumerate(preguntas):
             opciones = pregunta.get('opciones', [])
             if len(opciones) <= 1:
@@ -28,7 +31,7 @@ class SalaSerializer(serializers.ModelSerializer):
 
             correctas = [op for op in opciones if op.get('es_correcta')]
             if len(correctas) != 1:
-                raise serializers.ValidationError(f"La pregunta #{i+1} debe tener exactamente UNA opción correcta.")
+                raise serializers.ValidationError(f"La pregunta #{i+1} debe tener exactamente 1 opción correcta.")
 
         return data        
 

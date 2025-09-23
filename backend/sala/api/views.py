@@ -20,6 +20,16 @@ class ListarmySalas(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class ShowCodigoSala(APIView):  #Find Sala by codigoUnico
+    def get(self, request, codigounico):
+        print(codigounico)
+        try:
+            sala = Sala.objects.get(codigoUnico=codigounico)
+        except Sala.DoesNotExist:
+            return Response({"error": "No existe ninguna sala con ese codigo"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = SalaSerializer(sala)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class CrearSalaCompletaAV(APIView):
     permission_classes = [IsAuthenticated]  #Proteje la vista , solo los users Auth pueden usar este metodo
@@ -30,6 +40,9 @@ class CrearSalaCompletaAV(APIView):
         return Response(serializers.data)
 
     def post(self, request):
+        print("Datos recibidos:", request.data) 
+        print("Datos DEL USUARIO AUTH:", request.user) 
+        
         serializer = SalaSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             sala = serializer.save()
@@ -68,4 +81,6 @@ class SalaDetailAV(APIView):
 
         sala.delete()
         return Response({'mensaje': 'Sala eliminada'}, status=status.HTTP_204_NO_CONTENT)
+          
+          
           

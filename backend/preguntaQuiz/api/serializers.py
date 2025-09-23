@@ -11,9 +11,10 @@ class PreguntaQuizSerializer(serializers.ModelSerializer):
         fields = ['id', 'pregunta', 'orden', 'tiempo_limite', 'sala_id' ,'fechaCreada', 'update', 'opciones']
         read_only_fields = ['orden']
 
+
     def validate(self, data):
         opciones = data.get('opciones')
-        if data['tiempo_limite'] < 5 or data['tiempo_limite'] > 10 :
+        if data['tiempo_limite'] < 5 or data['tiempo_limite'] > 10:
             raise serializers.ValidationError({"tiempo_limite": "Debe ser al menos 5 o maximo 10 segundos" })   
            
         if opciones is None:
