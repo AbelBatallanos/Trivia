@@ -7,10 +7,7 @@ from preguntaQuiz.models import PreguntaQuiz
 
 
 class RespuestaUsuario(models.Model):
-    usuario = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE
-    )
+    
     sala = models.ForeignKey(
         Sala, 
         on_delete=models.CASCADE
@@ -21,7 +18,7 @@ class RespuestaUsuario(models.Model):
     fecha_respuesta = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('usuario', 'pregunta')  # Evitamos que responda dos veces la misma pregunta el usuario
+        unique_together = ('pregunta')  # Evitamos que responda dos veces la misma pregunta el usuario
 
 
 

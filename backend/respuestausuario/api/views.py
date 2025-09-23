@@ -11,7 +11,7 @@ class RegistrarRespuestaView(APIView):
     def post(self, request, id_sala, id_pregunta):
         usuario = request.user
         es_correcta = request.data.get('es_correcta')
-
+        puntos = int(request.data.get("puntos"))
         # Validar existencia de pregunta y sala
         try:
             pregunta = PreguntaQuiz.objects.get(id=id_pregunta, sala_id=id_sala)
@@ -20,7 +20,6 @@ class RegistrarRespuestaView(APIView):
 
         # Crear respuesta
         respuesta = RespuestaUsuario.objects.create(
-            usuario=usuario,
             sala_id=id_sala,
             pregunta=pregunta,
             es_correcta=es_correcta
@@ -30,7 +29,7 @@ class RegistrarRespuestaView(APIView):
         puntaje = UsuarioPuntaje.objects.get(usuario=usuario, sala_id=id_sala)
         if es_correcta:
             puntaje.aciertos += 1
-            puntaje.puntaje += pregunta.valor  # ← valor dinámico
+            puntaje.puntaje += puntos  # ← valor dinámico
         else:
             puntaje.fallos += 1
         puntaje.save()
