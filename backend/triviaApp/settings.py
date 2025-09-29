@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders', #Solucion pa los cors
+    
+    'channels', #Para Sockets
 ]
 
 REST_FRAMEWORK = {
@@ -87,8 +89,18 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'triviaApp.wsgi.application'
 
+# Configuración del Channel Layer para Redis
+ASGI_APPLICATION = 'triviaApp.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)], #El nombre del servicio Redis en Docker
+        },
+    },
+}
 
 
 # Database
@@ -125,7 +137,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # AUTH_USER_MODEL = 'usuario.Usuario'
 
-CORS_ALLOWED_ORIGINS = [  #Habilita las conexiones especificas 
+CORS_ALLOWED_ORIGINS = [  #Habilita las conexiones especificas para el frontend
     # "http://localhost:3000",
     # "http://127.0.0.1:8000",
     # "http://localhost:8000",

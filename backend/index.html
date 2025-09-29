@@ -1,0 +1,45 @@
+modificar falta 
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cliente WebSocket Trivia</title>
+</head>
+<body>
+  <h2>Conexión a sala de trivia</h2>
+  <input type="text" id="codigoUnico" placeholder="Código de sala" />
+  <button onclick="conectar()">Conectar</button>
+
+  <div id="estado"></div>
+  <textarea id="mensaje" placeholder='{"evento":"respuesta","pregunta_id":1,"opcion_id":3}'></textarea>
+  <button onclick="enviar()">Enviar mensaje</button>
+
+  <pre id="respuesta"></pre>
+
+  <script>
+    let socket;
+
+    function conectar() {
+      const codigo = document.getElementById("codigoUnico").value;
+      socket = new WebSocket(`ws://localhost:8000/ws/sala/${codigo}/`);
+
+      socket.onopen = function() {
+        console.log("Conectando al WebSocket");
+        document.getElementById("estado").innerText = "✅ Conectado a sala " + codigo;
+      };
+
+      socket.onmessage = (event) => {
+        document.getElementById("respuesta").innerText += "\n📩 Servidor: " + event.data;
+      };
+
+      socket.onclose = () => {
+        document.getElementById("estado").innerText = "❌ Desconectado";
+      };
+    }
+
+    function enviar() {
+      const mensaje = document.getElementById("mensaje").value;
+      socket.send(mensaje);
+    }
+  </script>
+</body>
+</html>
