@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-!8mh^^uo6#_n)3)4q7p77fio7(84_^zr7(ekr$(3hmb&=82ws%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['3.223.82.158', 'localhost', '127.0.0.1']
+ # Solo para desarrollo, no recomendado en producción
 
 
 # Application definition
@@ -127,14 +128,14 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # AUTH_USER_MODEL = 'usuario.Usuario'
 
-CORS_ALLOWED_ORIGINS = [  #Habilita las conexiones especificas 
-    # "http://localhost:3000",
-    # "http://127.0.0.1:8000",
-    "http://localhost:8081",
-    # "https://tudominio.com",
-    "http://127.0.0.1:5500"
-]
-# CORS_ALLOW_ALL_ORIGINS = True #habilita cualquier dominio para que consuma la api, pero no es recomendado para produccion
+# CORS_ALLOWED_ORIGINS = [  #Habilita las conexiones especificas 
+#     # "http://localhost:3000",
+#     # "http://127.0.0.1:8000",
+#     "http://localhost:8081",
+#     # "https://tudominio.com",
+#     "http://127.0.0.1:5500"
+# ]
+CORS_ALLOW_ALL_ORIGINS = True #habilita cualquier dominio para que consuma la api, pero no es recomendado para produccion
 
 # CORS_ALLOWED_ORIGIN_REGEXES = [ # para definir patrones de dominios.
 #     r"^https://\w+\.tudominio\.com$",
