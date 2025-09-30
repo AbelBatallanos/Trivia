@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-// tipos de datos que recibirá el componente
 type Question = { id: number; text: string };
 type NavigatorProps = {
   questions: Question[];
@@ -74,6 +73,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
+    marginLeft: 8,
   },
 });
 

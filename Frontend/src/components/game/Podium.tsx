@@ -8,6 +8,8 @@ type PodiumProps = {
   nickname: string;
 };
 
+
+
 const Podium = ({ score, nickname }: PodiumProps) => {
   return (
     <View style={styles.container}>

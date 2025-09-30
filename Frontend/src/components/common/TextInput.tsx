@@ -5,9 +5,9 @@ interface CustomTextInputProps extends TextInputProps {
   placeholder: string;
 }
 
-const CustomTextInput = (props: CustomTextInputProps) => {
+const CustomTextInput = ({style, ...props}: CustomTextInputProps) => {
   return (
-    <TextInput style={styles.input} placeholderTextColor="#A0AEC0" {...props} />
+    <TextInput style={[styles.input, style]} placeholderTextColor="#A0AEC0" {...props} />
   );
 };
 

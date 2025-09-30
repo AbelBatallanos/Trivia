@@ -31,7 +31,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 0, 
+    paddingHorizontal: 16,
+    paddingVertical: 12,   
+    backgroundColor: "#1A202C", 
+    zIndex: 10, 
+    // Posicionamiento para hacerlo fijo
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
   logo: {
     fontSize: 24,

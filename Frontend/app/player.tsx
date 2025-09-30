@@ -1,194 +1,315 @@
-import FeedbackOverlay from "@/components/game/FeedbackOverlay";
+// diegofmdev/trivia-prueba-4/trivia-prueba-4-91bcf1b0dfd47a65c9fbd2abce9e5003b070ba58/frontend/app/player.tsx
+import {
+  closeSalaSocket,
+  connectSalaSocket,
+  sendSocketMessage,
+} from "@/api/websocket";
+import { COLORS } from "@/constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-const exampleTrivia = [
-  {
-    text: "¿Cuál es la capital de Japón?",
-    timeLimit: 20,
-    answers: [
-      { text: "Pekín" },
-      { text: "Seúl" },
-      { text: "Tokio", isCorrect: true },
-      { text: "Bangkok" },
-    ],
-  },
-  {
-    text: '¿Qué elemento tiene el símbolo "O"?',
-    timeLimit: 15,
-    answers: [
-      { text: "Oxígeno", isCorrect: true },
-      { text: "Oro" },
-      { text: "Osmio" },
-      { text: "Oganesón" },
-    ],
-  },
-];
-
+// K - Variables de configuración visual (formas y colores)
 const answerOptions = [
-  { color: "#e53e3e", shape: "triangle" as const },
-  { color: "#3182CE", shape: "diamond" as const },
-  { color: "#D69E2E", shape: "ellipse" as const },
-  { color: "#38A169", shape: "square" as const },
+  { color: "#e53e3e", shape: "play" as const, name: "play" as const }, // Rojo
+  { color: "#3182CE", shape: "square" as const, name: "square" as const }, // Azul
+  { color: "#D69E2E", shape: "ellipse" as const, name: "ellipse" as const }, // Dorado
+  { color: "#38A169", shape: "heart" as const, name: "heart" as const }, // Verde
 ];
 
-type GameState = "answering" | "feedback" | "interstitial";
+type GameState =
+  | "loading"
+  | "answering"
+  | "answered"
+  | "feedback"
+  | "interstitial"
+  | "error";
 
 const PlayerScreen = () => {
   const router = useRouter();
-  const [gameState, setGameState] = useState<GameState>("answering");
+  const params = useLocalSearchParams();
+
+  const {
+    quizData: quizDataString,
+    nickname,
+    isHost,
+    salaId: externalSalaId,
+  } = params;
+  const quizData = JSON.parse(quizDataString as string);
+  const salaId = externalSalaId?.toString() || quizData.id.toString();
+
+  const [gameState, setGameState] = useState<GameState>("loading");
+  const [currentQuestionData, setCurrentQuestionData] = useState<any>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(exampleTrivia[0].timeLimit);
-  const [feedback, setFeedback] = useState({
-    show: false,
-    isCorrect: false,
-    points: 0,
-  });
-  const [hasAnswered, setHasAnswered] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
-  const { nickname } = useLocalSearchParams();
+
+  const [hasAnswered, setHasAnswered] = useState(false);
   const [selectedAnswerIndex, setSelectedAnswerIndex] = useState<number | null>(
     null
   );
-  const currentQuestion = exampleTrivia[currentQuestionIndex];
+  const [correctAnswerId, setCorrectAnswerId] = useState<number | null>(null);
 
+  // K - NUEVO: Estado para el feedback temporal en la UI
+  const [feedbackMessage, setFeedbackMessage] = useState<string>("");
+
+  // 1. Conexión del Socket (WS V3 Flow)
   useEffect(() => {
-    if (gameState !== "answering") return;
-
-    if (timeLeft === 0) {
-      if (!hasAnswered) {
-        setFeedback({ show: true, isCorrect: false, points: 0 });
-      }
-      showFeedbackAndAdvance();
+    if (!salaId) {
+      setGameState("error");
+      Alert.alert("Error", "ID de Sala no encontrado.");
       return;
     }
 
+    connectSalaSocket(
+      quizData.codigoUnico,
+      handleSocketMessage,
+      (status: boolean) => {
+        console.log("Socket connection status:", status);
+      }
+    );
+
+    return () => {
+      closeSalaSocket();
+    };
+  }, [salaId]);
+
+  // 2. Manejador de eventos del Servidor
+  const handleSocketMessage = (data: any) => {
+    switch (data.action) {
+      case "game_started":
+        setGameState("loading");
+        setTotalScore(0);
+        setFeedbackMessage("");
+        break;
+
+      case "question_start":
+        // K - Carga la pregunta del servidor.
+        setCurrentQuestionIndex(data.question_index);
+        setCurrentQuestionData(data.question);
+        setTimeLeft(data.question.tiempo_limite);
+
+        // K - Reinicio de estados
+        setCorrectAnswerId(null);
+        setHasAnswered(false);
+        setSelectedAnswerIndex(null);
+        setFeedbackMessage(""); // K - Limpiar mensaje
+        setGameState("answering"); // Permite responder
+        break;
+
+      case "answer_feedback":
+        // K - RECIBIDO EL FEEDBACK INDIVIDUAL (PUNTOS Y CORRECTO/INCORRECTO)
+        const isCorrect = data.is_correct;
+        const pointsAwarded = data.points_awarded;
+
+        // K - ESTO CORRIGE EL MENSAJE: Usa la información real del servidor
+        setFeedbackMessage(
+          `${isCorrect ? "¡Correcto!" : "Incorrecto"} +${pointsAwarded} Puntos`
+        );
+
+        // K - Actualiza el score TOTAL de forma segura con el valor del servidor
+        if (data.total_score !== undefined) {
+          setTotalScore(data.total_score);
+        }
+
+        break;
+
+      case "question_end":
+        // K - El servidor finaliza el tiempo y envía resultados (REVELACIÓN GLOBAL).
+        setCorrectAnswerId(data.correct_option_id);
+        setGameState("feedback"); // Bloquea el juego y muestra la revelación
+
+      // K - CORRECCIÓN: Si el jugador NUNCA respondió (hasAnswered es false),
+      // establece el mensaje "Sin respuesta". Si ya tenemos un mensaje, lo mantiene.
+      // if (!hasAnswered) {
+      //      setFeedbackMessage("Sin respuesta. 0 Puntos");
+      // }
+      // break;
+
+      case "game_finish":
+        // K - DEBUG: Confirma que se recibe el evento
+        console.log("GAME_FINISH RECEIVED. Redirecting...");
+        // K - Navega a resultados con el ID de la Sala
+        router.replace({
+          pathname: "/results",
+          params: { salaId: salaId.toString(), nickname },
+        });
+        break;
+
+      case "error":
+        Alert.alert("Error del Juego", data.message);
+        router.replace("/(tabs)");
+        break;
+    }
+  };
+
+  // 3. El timer es SÓLO VISUAL (Corrección de Sincronización)
+  useEffect(() => {
+    // K - El timer corre si el estado es 'answering' O 'answered'
+    if (gameState !== "answering" && gameState !== "answered") return;
+
     const timer = setInterval(() => {
-      setTimeLeft((t) => t - 1);
+      setTimeLeft((t) => (t > 0 ? t - 1 : 0));
     }, 1000);
     return () => clearInterval(timer);
-  }, [timeLeft, gameState, hasAnswered]);
+  }, [timeLeft, gameState]);
 
+  // 4. Lógica de Respuesta
   const handleAnswer = (answerIndex: number) => {
-    if (hasAnswered) return;
+    if (hasAnswered || gameState !== "answering" || !currentQuestionData)
+      return;
 
     setHasAnswered(true);
     setSelectedAnswerIndex(answerIndex);
 
-    const isCorrect =
-      exampleTrivia[currentQuestionIndex].answers[answerIndex]?.isCorrect ||
-      false;
-    const points = isCorrect
-      ? Math.round(
-          1000 * (timeLeft / exampleTrivia[currentQuestionIndex].timeLimit)
-        )
-      : 0;
+    // **Envía el ID de la opción al SERVIDOR, SIN PUNTOS**
+    sendSocketMessage("submit_answer", {
+      question_id: currentQuestionData.id,
+      opcion_id: currentQuestionData.opciones[answerIndex].id,
+    });
 
-    setTotalScore((prevScore) => prevScore + points);
-
-    console.log("Respuesta enviada. Esperando a que termine el tiempo...");
-    setFeedback({ show: true, isCorrect, points });
+    // K - El juego se queda en "answered" para que el timer siga corriendo.
+    setGameState("answered");
   };
 
-  const showFeedbackAndAdvance = () => {
-    setGameState("feedback");
-
-    setTimeout(() => {
-      setGameState("interstitial");
-      setTimeout(() => {
-        goToNextQuestion();
-      }, 1500);
-    }, 2000);
-  };
-
-  const goToNextQuestion = () => {
-    if (currentQuestionIndex < exampleTrivia.length - 1) {
-      const nextIndex = currentQuestionIndex + 1;
-      setCurrentQuestionIndex(nextIndex);
-      setTimeLeft(exampleTrivia[nextIndex].timeLimit);
-      setHasAnswered(false);
-      setSelectedAnswerIndex(null);
-      setFeedback({ show: false, isCorrect: false, points: 0 });
-      setGameState("answering");
-    } else {
-      console.log("FIN DEL JUEGO. Puntaje final: ", totalScore);
-      router.replace({
-        pathname: "/results",
-        params: { finalScore: totalScore, nickname },
-      });
-    }
-  };
-
-  if (gameState === "interstitial") {
-    const isLastQuestion = currentQuestionIndex >= exampleTrivia.length - 1;
+  // K - Renderizado de carga (Corrige el loading infinito y el texto flotante)
+  if (gameState === "loading" || !currentQuestionData) {
     return (
       <View style={styles.interstitialContainer}>
-        <Text style={styles.interstitialText}>
-          {isLastQuestion
-            ? "¡Fin de la partida!"
-            : `Pregunta ${currentQuestionIndex + 2}`}
+        {/* Ícono grande para darle identidad a la pantalla de espera */}
+        <Ionicons
+          name="game-controller-outline"
+          size={80}
+          color={COLORS.primary}
+          style={styles.loadingIcon}
+        />
+        {/* Indicador de actividad */}
+        <ActivityIndicator
+          size="large"
+          color="white"
+          style={styles.loadingIndicator}
+        />
+        {/* Título más legible */}
+        <Text style={styles.loadingTitle}>Esperando inicio de partida</Text>
+        {/* Subtítulo para más contexto */}
+        <Text style={styles.loadingSubtitle}>
+          El anfitrión está preparando el juego...
         </Text>
       </View>
     );
   }
 
+  if (gameState === "error") {
+    return null;
+  }
+
+  const currentQuestion = currentQuestionData;
+  const questionNumber = currentQuestionIndex + 1; // K - Para la corrección del NaN
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.questionCounter}>
-          <Text style={styles.counterText}>1 de 10</Text>
+          {/* K - CORRECIÓN UI: Pregunta #X */}
+          <Text style={styles.counterText}>{`Pregunta ${questionNumber}`}</Text>
         </View>
+        <Text style={styles.scoreDisplay}>Puntaje: {totalScore}</Text>
         <Pressable>
           <Ionicons name="ellipsis-vertical" size={24} color="white" />
         </Pressable>
       </View>
 
       <View style={styles.mainContent}>
-        <Text style={styles.questionText}>{currentQuestion.text}</Text>
+        {/* K - Mostrar el mensaje de feedback temporal */}
+        {gameState === "feedback" && feedbackMessage.length > 0 && (
+          <View style={styles.feedbackMessageContainer}>
+            <Text
+              style={[
+                styles.feedbackMessageText,
+                {
+                  color:
+                    feedbackMessage.includes("Incorrecto") ||
+                    feedbackMessage.includes("Sin respuesta")
+                      ? "#e53e3e"
+                      : "#38A169",
+                },
+              ]}
+            >
+              {feedbackMessage}
+            </Text>
+          </View>
+        )}
+
+        <Text style={styles.questionText}>{currentQuestion.pregunta}</Text>
 
         <View style={styles.timerContainer}>
           <Text style={styles.timerText}>{timeLeft}</Text>
         </View>
+
         <View style={styles.answersContainer}>
-          {currentQuestion.answers.map((answer, index) => {
+          {currentQuestion.opciones.map((opcion: any, index: number) => {
             const isSelected = index === selectedAnswerIndex;
-            const buttonStyle = hasAnswered
-              ? isSelected
-                ? styles.selectedButton
-                : styles.disabledButton
-              : styles.answerButton;
+            const isCorrectOption = opcion.id === correctAnswerId; // K - Determina si es la respuesta correcta revelada
+
+            // K - 1. Determinar el estado de revelación
+            const isRevealed = gameState === "feedback";
+
+            // K - 2. Determinar el color de fondo (rojo/verde si revelado, color original si no)
+            const backgroundColor = isRevealed
+              ? isCorrectOption
+                ? "#38A169"
+                : "#E53E3E" // Verde si es correcta, Rojo si no
+              : answerOptions[index % 4].color;
+
+            // K - 3. Determinar la opacidad (atenuar incorrectas no seleccionadas)
+            const opacityStyle =
+              isRevealed && !isCorrectOption && !isSelected
+                ? { opacity: 0.4 }
+                : {};
+
+            // K - 4. Determinar el borde (SOLO si fue seleccionado por el usuario y el juego NO está en estado 'answering')
+            const borderStyle =
+              isSelected && gameState !== "answering"
+                ? styles.selectedButtonBorder
+                : {};
 
             return (
               <Pressable
-                key={index}
+                key={opcion.id}
                 style={[
-                  buttonStyle,
-                  { backgroundColor: answerOptions[index].color },
+                  styles.answerButton, // Base container/geometry
+                  { backgroundColor },
+                  opacityStyle,
+                  borderStyle, // Aplicar el borde blanco si fue la seleccionada
                 ]}
                 onPress={() => handleAnswer(index)}
-                disabled={hasAnswered}
+                disabled={hasAnswered || gameState !== "answering"}
               >
                 <Ionicons
-                  name={answerOptions[index].shape}
+                  name={answerOptions[index % 4].name}
                   size={20}
                   color="white"
                 />
-                <Text style={styles.answerText}>{answer.text}</Text>
+                <Text style={styles.answerText}>{opcion.descripcion}</Text>
               </Pressable>
             );
           })}
         </View>
       </View>
-
-      {gameState === "feedback" && feedback.show && (
-        <FeedbackOverlay {...feedback} />
-      )}
     </SafeAreaView>
   );
 };
 
+// K - ESTILOS COMPLETOS CON scoreDisplay Y BOTONES DE FEEDBACK AÑADIDOS
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#39425A" },
   header: {
@@ -198,6 +319,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
+  scoreDisplay: { color: "white", fontSize: 18, fontWeight: "bold" },
   questionCounter: {
     backgroundColor: "rgba(0,0,0,0.2)",
     paddingHorizontal: 12,
@@ -251,6 +373,7 @@ const styles = StyleSheet.create({
     padding: 12,
     flexDirection: "row",
     alignItems: "flex-start",
+    // K - Estilo base sin borde ni opacidad
   },
   answerText: {
     color: "white",
@@ -259,19 +382,62 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     flex: 1,
   },
-  interstitialContainer: {
-    flex: 1,
-    backgroundColor: "#39425A",
-    justifyContent: "center",
-    alignItems: "center",
-  },
+
   interstitialText: {
     color: "white",
     fontSize: 48,
     fontWeight: "bold",
   },
 
-  selectedButton: {
+  interstitialContainer: {
+    flex: 1,
+    backgroundColor: "#1A202C", // Fondo oscuro para centrado
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+  loadingIcon: {
+    marginBottom: 40,
+  },
+  loadingIndicator: {
+    marginBottom: 20,
+  },
+  loadingTitle: {
+    color: "white",
+    fontSize: 28, // Título grande y claro
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  loadingSubtitle: {
+    color: "#A0AEC0", // Subtítulo sutil
+    fontSize: 16,
+    textAlign: "center",
+  },
+
+  // K - NUEVOS ESTILOS PARA EL MENSAJE DE FEEDBACK TEMPORAL
+  feedbackMessageContainer: {
+    position: "absolute",
+    top: "15%",
+    zIndex: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  feedbackMessageText: {
+    fontSize: 22,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+
+  // K - ESTILO CLAVE: AHORA SÓLO APLICA EL BORDE.
+  selectedButtonBorder: {
+    borderWidth: 3,
+    borderColor: "white",
+  },
+
+  // Estilos que se mantienen para el código que usa lógica de color/opacidad directamente en línea.
+  correctButton: {
     width: "48.5%",
     minHeight: 100,
     borderRadius: 8,
@@ -279,9 +445,17 @@ const styles = StyleSheet.create({
     padding: 12,
     flexDirection: "row",
     alignItems: "flex-start",
-    borderWidth: 3,
-    borderColor: "white",
     opacity: 1,
+  },
+  wrongButton: {
+    width: "48.5%",
+    minHeight: 100,
+    borderRadius: 8,
+    marginBottom: "3%",
+    padding: 12,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    opacity: 0.8,
   },
   disabledButton: {
     width: "48.5%",

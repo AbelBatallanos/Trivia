@@ -12,7 +12,7 @@ const TabsLayout = () => {
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="join" />
-      <Tabs.Screen name="create" />
+      <Tabs.Screen name="editor" />
     </Tabs>
   );
 };

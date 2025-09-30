@@ -10,7 +10,7 @@ const FeedbackOverlay = ({ isCorrect, points }: Props) => {
     <View
       style={[
         styles.sheetContainer,
-        { backgroundColor: isCorrect ? "#2F855A" : "#C53030" },
+        { backgroundColor: isCorrect ? "#tranparent" : "transparent" },
       ]}
     >
       <Ionicons

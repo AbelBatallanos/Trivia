@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 class ListarmySalas(APIView):
     def get(self, request):
-        salas = Sala.objects.filter(creador_id=request.user.id)
+        salas = Sala.objects.filter(creador_id=request.user.id).order_by('-fecha_creacion')
 
         if not salas.exists():
             return Response(
@@ -24,7 +24,7 @@ class ShowCodigoSala(APIView):  #Find Sala by codigoUnico
     def get(self, request, codigounico):
         print(codigounico)
         try:
-            sala = Sala.objects.get(codigoUnico=codigounico)
+            sala = Sala.objects.get(codigoUnico=codigounico.upper())
         except Sala.DoesNotExist:
             return Response({"error": "No existe ninguna sala con ese codigo"}, status=status.HTTP_400_BAD_REQUEST)
         serializer = SalaSerializer(sala)

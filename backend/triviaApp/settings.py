@@ -25,9 +25,7 @@ SECRET_KEY = 'django-insecure-!8mh^^uo6#_n)3)4q7p77fio7(84_^zr7(ekr$(3hmb&=82ws%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['3.223.82.158', 'localhost', '127.0.0.1']
- # Solo para desarrollo, no recomendado en producción
-
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -47,6 +45,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders', #Solucion pa los cors
+    'respuestausuario.apps.RespuestausuarioConfig',
+    'channels',
 ]
 
 REST_FRAMEWORK = {
@@ -60,8 +60,8 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware', #ini cors
-    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',#hasta aqui es del cors
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -127,14 +127,14 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # AUTH_USER_MODEL = 'usuario.Usuario'
 
-# CORS_ALLOWED_ORIGINS = [  #Habilita las conexiones especificas 
-#     # "http://localhost:3000",
-#     # "http://127.0.0.1:8000",
-#     # "http://localhost:8000",
-#     # "https://tudominio.com",
-#     "http://127.0.0.1:5500"
-# ]
-CORS_ALLOW_ALL_ORIGINS = True #habilita cualquier dominio para que consuma la api, pero no es recomendado para produccion
+CORS_ALLOWED_ORIGINS = [  #Habilita las conexiones especificas 
+    # "http://localhost:3000",
+    # "http://127.0.0.1:8000",
+    "http://localhost:8081",
+    # "https://tudominio.com",
+    "http://127.0.0.1:5500"
+]
+# CORS_ALLOW_ALL_ORIGINS = True #habilita cualquier dominio para que consuma la api, pero no es recomendado para produccion
 
 # CORS_ALLOWED_ORIGIN_REGEXES = [ # para definir patrones de dominios.
 #     r"^https://\w+\.tudominio\.com$",
@@ -162,3 +162,16 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuración socket
+ASGI_APPLICATION = 'triviaApp.asgi.application'
+
+# Usamos la capa en memoria (para desarrollo sencillo)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)], 
+        },
+    },
+}

@@ -5,10 +5,11 @@ from rest_framework.views import APIView
 from usuarioPuntaje.models import UsuarioPuntaje
 from sala.models import Sala
 from usuarioPuntaje.api.serializers import UserPuntajeSerializer
-
+from rest_framework.permissions import AllowAny
 
 
 class ListarUserPoints(APIView):
+    permission_classes = [AllowAny] 
     def get(self, request, id_sala):
         userPoints = UsuarioPuntaje.objects.filter(sala_id=id_sala)
         if not userPoints.exists():
