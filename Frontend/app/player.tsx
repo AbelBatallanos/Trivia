@@ -108,7 +108,7 @@ const PlayerScreen = () => {
         const pointsAwarded = data.points_awarded;
 
         setFeedbackMessage(
-          ${isCorrect ? "¡Correcto!" : "Incorrecto"} +${pointsAwarded} Puntos
+          `${isCorrect ? "¡Correcto!" : "Incorrecto"} +${pointsAwarded} Puntos`
         );
 
         if (data.total_score !== undefined) {
@@ -200,7 +200,7 @@ const PlayerScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.questionCounter}>
-          <Text style={styles.counterText}>{Pregunta ${questionNumber}}</Text>
+          <Text style={styles.counterText}>{`Pregunta ${questionNumber}`}</Text>
         </View>
         <Text style={styles.scoreDisplay}>Puntaje: {totalScore}</Text>
         <Pressable>
@@ -400,3 +400,4 @@ const styles = StyleSheet.create({
 });
 
 export default PlayerScreen;
+
